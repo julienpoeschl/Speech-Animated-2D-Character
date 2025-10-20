@@ -10,7 +10,7 @@
     {
       "label": "Install requirements",
       "type": "shell",
-      "command": ". .\\.venv\\Scripts\\Activate.ps1; python -m pip install --upgrade pip; python -m pip install -r requirements.txt",
+      "command": "${config:python.pythonPath} -m pip install --upgrade pip && ${config:python.pythonPath} -m pip install -r requirements.txt",
       "problemMatcher": []
     }
   ]
