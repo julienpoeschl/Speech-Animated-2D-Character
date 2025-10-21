@@ -1,0 +1,13 @@
+{
+    "active_layout": "demo",
+    
+    "layouts":
+    {
+        "demo":
+        {
+            "closed_mouth": "demo_frame_1.png",
+            "open_mouth": "demo_frame_5.png",
+            "intermediate": ["demo_frame_2.png", "demo_frame_3.png", "demo_frame_4.png"]
+        }
+    }
+}
