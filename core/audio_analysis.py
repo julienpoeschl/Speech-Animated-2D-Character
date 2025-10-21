@@ -4,7 +4,10 @@ class AudioInfo:
     """
     Container of imediatly calulated data of audio bytes.
     """
-    def __init__(self, data : bytes, sample_rate : int = 44100, db_threshold : int = -40) -> None:
+
+    __slots__ = ("rms", "db", "dominant_freq", "audio_detected")
+
+    def __init__(self, data : bytes, sample_rate : int = 44100, db_threshold : int = -40, compute_fft : bool = False) -> None:
         samples = np.frombuffer(data, dtype=np.int16)
         samples = samples.astype(np.float32)
         rms = np.sqrt(np.mean(samples**2))
@@ -23,10 +26,11 @@ class AudioInfo:
             #print("Silence.", int(rms), "RMS, ", int(db), "db")
             self.audio_detected = False
 
-        fft = np.fft.rfft(samples)
-        freqs = np.fft.rfftfreq(len(samples), 1/sample_rate)
-        magnitude = np.abs(fft)
+        if compute_fft:
+            fft = np.fft.rfft(samples)
+            freqs = np.fft.rfftfreq(len(samples), 1/sample_rate)
+            magnitude = np.abs(fft)
+            self.dominant_freq = freqs[np.argmax(magnitude)]
 
         self.rms = rms
         self.db = db
-        self.dominant_freq = freqs[np.argmax(magnitude)]
