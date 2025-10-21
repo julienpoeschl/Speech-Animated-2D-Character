@@ -1,7 +1,9 @@
 import numpy as np
 
 class AudioInfo:
-    
+    """
+    Container of imediatly calulated data of audio bytes.
+    """
     def __init__(self, data : bytes, sample_rate : int = 44100, db_threshold : int = -40) -> None:
         samples = np.frombuffer(data, dtype=np.int16)
         samples = samples.astype(np.float32)
@@ -15,10 +17,10 @@ class AudioInfo:
 
 
         if db > db_threshold:
-            print("Speech detected!", int(rms), "RMS, ", int(db), "db")
+            #print("Speech detected!", int(rms), "RMS, ", int(db), "db")
             self.audio_detected = True
         else:
-            print("Silence.", int(rms), "RMS, ", int(db), "db")
+            #print("Silence.", int(rms), "RMS, ", int(db), "db")
             self.audio_detected = False
 
         fft = np.fft.rfft(samples)
