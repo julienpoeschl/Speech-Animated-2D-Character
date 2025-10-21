@@ -24,4 +24,4 @@ Now you can adjust the settings before starting. Most importantly the selection 
 Pressing `Start Listening` will start the application.
 
 ## Personalization (in work)
-The project contains a (config)[app/config.json] json file, which determines which pictures to use. You can paste your own pictures in the (/media)[app/media] directory and replace mine with yours in the json file.
+The project contains a [config](app/assets/configuration/config.json) json file, which determines which pictures to use. You can paste your own pictures in the (/media)[app/media] directory and replace mine with yours in the json file.
