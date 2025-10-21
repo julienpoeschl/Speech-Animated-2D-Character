@@ -1,12 +1,16 @@
 from PyQt6.QtWidgets import QApplication
 import sys
 
-from .controller import Controller
+from .controller import AppController
 from .gui.window import AppWindow
 
-if __name__ == "__main__":
+
+def main() -> None:
     app = QApplication(sys.argv)
-    controller = Controller()
+    controller = AppController()
     window = AppWindow(app, controller)
     window.show()
     sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
