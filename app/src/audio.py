@@ -1,11 +1,13 @@
 import pyaudio
 from core.audio_analysis import AudioInfo
 
+DEFAULT_DB_THRESHOLD = -40
 
 class AudioReader:
     def __init__(self) -> None:
         self._running = False
         self._curr_audio_info = None
+        self._db_threshold = DEFAULT_DB_THRESHOLD
         
         
     def start(self, p : pyaudio.PyAudio, device_index : int, format : int = pyaudio.paInt16, channel_count : int = 1, sample_rate : int = 44100, frames : int = 1024):
@@ -20,7 +22,7 @@ class AudioReader:
 
         while self._running:
             self.data = stream.read(1024)
-            self._curr_audio_info = AudioInfo(self.data, sample_rate, -40)
+            self._curr_audio_info = AudioInfo(self.data, sample_rate, self._db_threshold)
             if self._curr_audio_info.audio_detected:
                 print(self._curr_audio_info.db)
 
@@ -37,3 +39,13 @@ class AudioReader:
     @property
     def curr_audio_info(self) -> AudioInfo | None:
         return self._curr_audio_info
+
+    @property
+    def db_threshold(self) -> int:
+        return self._db_threshold
+    
+    @db_threshold.setter
+    def db_threshold(self, value : int):
+        if not isinstance(value, int):
+            raise ValueError("ERROR: db threshold must be an integer.")
+        self._db_threshold = value
