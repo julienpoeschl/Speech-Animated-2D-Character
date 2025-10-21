@@ -2,7 +2,7 @@ import pyaudio
 import core.pyaudio_devices as pyaudio_devices
 from .audio import AudioReader
 
-from .character_loader import FaceType
+from .frame_loader import FaceType
 
 import threading
 
@@ -50,9 +50,13 @@ class Controller:
         if audio_info.rms > 1000:
             return FaceType.Open
         elif audio_info.rms > 500:
-            return FaceType.HalfOpen
+            return FaceType.Intermediate
         
         return FaceType.Closed
+    
+    def set_db_volume_threshold(self, threshold : int) -> None:
+        print(threshold)
+        self.audio_reader.db_threshold = threshold
 
 
     @property
@@ -62,3 +66,11 @@ class Controller:
     @property
     def curr_face_type(self) -> FaceType:
         return self._curr_face_type
+    
+    @property
+    def db_volume(self) -> int:
+        if not self.audio_reader._running:
+            raise RuntimeError("ERROR: Trying to read volume from audio reader that isn't running.")
+        if not self.audio_reader.curr_audio_info:
+            return -60
+        return int(self.audio_reader.curr_audio_info.db)
