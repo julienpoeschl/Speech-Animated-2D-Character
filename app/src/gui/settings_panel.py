@@ -1,7 +1,12 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QComboBox, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QComboBox, QHBoxLayout, QSpinBox
 from PyQt6.QtCore import Qt
 
 from ..controller import AppController
+
+MIN_DB = -60
+MAX_DB = 0
+
+MIN_SPEECH_DB = 0
 
 class SettingsPanel(QWidget):
     """
@@ -31,33 +36,46 @@ class SettingsPanel(QWidget):
         controller.on_device_index_changed(default_index)
 
 
-        self.db_threshold_label = QLabel("Audio level (dB):")
-        layout.addWidget(self.db_threshold_label)
+        self.ambient_cutoff_threshold_label = QLabel("Ambient/Ignore Threshold (dB):")
+        layout.addWidget(self.ambient_cutoff_threshold_label)
 
-        self.db_volume_slider = QSlider(Qt.Orientation.Horizontal)
-        self.db_volume_slider.setMinimum(-60)   # typical dB min
-        self.db_volume_slider.setMaximum(0)     # max volume (0 dB)
-        self.db_volume_slider.setValue(-60)
+        self.ambient_cutoff_threshold_slider = QSlider(Qt.Orientation.Horizontal)
+        self.ambient_cutoff_threshold_slider.setMinimum(MIN_DB)
+        self.ambient_cutoff_threshold_slider.setMaximum(MAX_DB)
+        self.ambient_cutoff_threshold_slider.setValue(MIN_DB)
         #self.db_threshold_slider.setDisabled(True)  # makes it uninteractable
-        self.db_volume_slider.valueChanged.connect(controller.set_db_volume_threshold)
-        layout.addWidget(self.db_volume_slider)
+        self.ambient_cutoff_threshold_slider.valueChanged.connect(controller.set_db_volume_threshold)
+        layout.addWidget(self.ambient_cutoff_threshold_slider)
 
-        self.update_db_volume_slider(0.0)
+        self.update_ambient_cutoff_threshold_slider(0.0)
 
         tick_layout = QHBoxLayout()
         layout.addLayout(tick_layout)
 
-        for db in range(-60, 1, 10):
+        for db in range(MIN_DB, MAX_DB + 1, 10):
             lbl = QLabel(str(db))
             lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             tick_layout.addWidget(lbl)
 
 
+        self.speech_threshold_label = QLabel("Speech Threshold (dB):")
+        layout.addWidget(self.speech_threshold_label)
+
+        self.speech_threshold_spinBox = QSpinBox()
+        self.speech_threshold_spinBox.setMinimum(MIN_SPEECH_DB)
+
+        self._update_speech_spinBox_max()
+        self.ambient_cutoff_threshold_slider.valueChanged.connect(self._update_speech_spinBox_max)
+
+        self.speech_threshold_spinBox.setValue(MIN_SPEECH_DB)
+        self.speech_threshold_spinBox.valueChanged.connect(controller.on_speech_volume_threshold_valueChanged)
+        layout.addWidget(self.speech_threshold_spinBox)
+
         layout.addStretch()  # push items to top
 
 
 
-    def update_db_volume_slider(self, progress: float) -> None:
+    def update_ambient_cutoff_threshold_slider(self, progress: float) -> None:
         """progress is a value between 0.0 (min) and 1.0 (max)"""
         # Convert progress to a CSS gradient stop
         # Blue → red gradient, tinted only up to progress
@@ -82,12 +100,18 @@ class SettingsPanel(QWidget):
                 border-radius: 5px;
             }}
         """
-        self.db_volume_slider.setStyleSheet(gradient)
+        self.ambient_cutoff_threshold_slider.setStyleSheet(gradient)
 
     def update_volume(self):
         db = self.controller.db_volume_threshold
-        #self.db_volume_slider.setValue(int(db))
+        #self.ambient_cutoff_threshold_slider.setValue(int(db))
 
         # convert dB range (-60..0) → (0..1)
         progress = (db + 60) / 60
-        self.update_db_volume_slider(progress)
+        self.update_ambient_cutoff_threshold_slider(progress)
+
+
+    def _update_speech_spinBox_max(self) -> None:
+        # maybe clamp value before
+        max_speech_threshold = abs(self.ambient_cutoff_threshold_slider.value())
+        self.speech_threshold_spinBox.setMaximum(max_speech_threshold)
