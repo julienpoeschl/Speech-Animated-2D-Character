@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton
 from PyQt6.QtCore import QSize, QTimer
 
-from ..controller import Controller
+from ..controller import AppController
 from .character_panel import CharacterPanel
 from .settings_panel import SettingsPanel
 
@@ -16,7 +16,7 @@ WINDOW_FPS_IN_MS = int(1000 / WINDOW_FPS)
 
 
 class AppWindow(QWidget):
-    def __init__(self, app : QApplication, controller : Controller):
+    def __init__(self, app : QApplication, controller : AppController):
         super().__init__()
 
         self.controller = controller
