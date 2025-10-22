@@ -66,7 +66,7 @@ class AppWindow(QWidget):
             self.start_button.setText("Start Listening")
             self.controller.stop_reading_audio()
         else:
-            self.start_button.setText("Listening...")
+            self.start_button.setText("Stop Listening")
             self.controller.start_reading_audio()
             self.timer.timeout.connect(self.character_panel.update)
             self.timer.timeout.connect(self.settings_panel.update_volume)
