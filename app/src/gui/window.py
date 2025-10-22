@@ -10,7 +10,7 @@ WINDOW_WIDTH = 700 # setting
 WINDOW_HEIGHT = 400 # setting
 DEFAULT_SCREEN_SIZE = QSize(1920, 1080) # setting
 
-WINDOW_FPS = 30 # setting
+WINDOW_FPS = 60 # setting
 WINDOW_FPS_IN_MS = int(1000 / WINDOW_FPS)    
 
 
