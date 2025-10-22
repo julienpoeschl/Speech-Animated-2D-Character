@@ -2,8 +2,9 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
 
 from ..controller import AppController
-from ..frame_loader import FrameLoader
+from ..frame_loader import FrameLoader, MouthState
 
+STARTING_FACE_TYPE = MouthState.Closed
 
 class CharacterPanel(QWidget):
     """
@@ -26,7 +27,7 @@ class CharacterPanel(QWidget):
         self.character_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.character_label)
 
-        pixmap = frame_loader.get_frame_pixmap(controller.curr_face_type)
+        pixmap = frame_loader.get_frame_pixmap(STARTING_FACE_TYPE)
         self.character_label.setPixmap(pixmap)
         self.character_label.setScaledContents(True)
 

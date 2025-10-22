@@ -5,8 +5,6 @@ from .audio_evaluator import AudioEvaluator
 
 from .frame_loader import MouthState
 
-STARTING_FACE_TYPE = MouthState.Closed
-
 class AppController:
     def __init__(self) -> None:
         self.py_audio = pyaudio.PyAudio()
