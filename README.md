@@ -20,8 +20,15 @@ If everything worked correctly, you should see this window:
 ## Settings
 Now you can adjust the settings before starting. Most importantly the selection of the correct audio input device and threshold for audio detection.
 
+If speech threshold is set to zero, the character will be animated with a completely opened mouth. By increasing the value, you can create a stage between closed mouth to opened mouth, where the mouth is animated using random half opened mouths.
+
+Settings that worked well for me personally where:
+
+- Ambient/Ignore: -45
+- Speech: 8 (-37)
+
 ## Result
 Pressing `Start Listening` will start the application.
 
-## Personalization (in work)
-The project contains a [config](app/assets/configuration/config.json) json file, which determines which pictures to use. You can paste your own pictures in the (/media)[app/media] directory and replace mine with yours in the json file.
+## Customization
+The project contains a [config](app/assets/configuration/config.json) json file, which determines which images to use. You can paste your own pictures in the [/assets/frames](app/assets/frames) directory and replace the `active_preset` with your newly created `preset` in `presets`.
