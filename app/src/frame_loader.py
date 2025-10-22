@@ -31,15 +31,15 @@ class FrameLoader:
             except json.JSONDecodeError as e:
                 raise ValueError(f"Invalid JSON in config file: {CONFIG_PATH}") from e
 
-        layout_name = config.get("active_layout")
+        layout_name = config.get("active_preset")
         if not layout_name:
-            raise KeyError('Config file must contain an "active_layout" entry.')
+            raise KeyError('Config file must contain an "active_preset" entry.')
 
-        layouts = config.get("layouts")
-        if layout_name not in layouts:
-            raise KeyError(f'Layout "{layout_name}" not found in config layouts.')
+        presets = config.get("presets")
+        if layout_name not in presets:
+            raise KeyError(f'Layout "{layout_name}" not found in config presets.')
 
-        layout = layouts[layout_name]
+        layout = presets[layout_name]
         try:
             closed_frame_path: str = layout["closed_mouth"]
             open_frame_path: str = layout["open_mouth"]
