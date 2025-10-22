@@ -1,10 +1,9 @@
 import pyaudio
 from core.pyaudio_devices import DeviceInfo
-from .audio import AudioReader
+from .audio_reader import AudioReader
+from .audio_evaluator import AudioEvaluator
 
 from .frame_loader import MouthState
-
-import threading
 
 STARTING_FACE_TYPE = MouthState.Closed
 
@@ -12,8 +11,8 @@ class AppController:
     def __init__(self) -> None:
         self.py_audio = pyaudio.PyAudio()
         self.device_info = DeviceInfo(self.py_audio)
-        self.audio_reader = AudioReader()
-        self._curr_face_type = STARTING_FACE_TYPE
+        self.audio_reader = AudioReader(self.py_audio)
+        self.audio_evaluator = AudioEvaluator()
 
 
     def get_device_names(self) -> list[str]:
@@ -31,35 +30,19 @@ class AppController:
 
 
     def start_reading_audio(self) -> None:
-        self.audio_reader_thread = threading.Thread(target=self.audio_reader.start, args=(self.py_audio, self.curr_device_index))
-        self.audio_reader_thread.start()
+        self.audio_reader.start(self.curr_device_index)
 
     def stop_reading_audio(self):
-        if self.audio_reader_thread and self.audio_reader_thread.is_alive():
-            self.audio_reader.stop()
-            self.audio_reader_thread.join()
+        self.audio_reader.stop()
 
     def evaluate_audio(self) -> MouthState:
         audio_info = self.audio_reader.curr_audio_info
-        if not audio_info:
-            return STARTING_FACE_TYPE
-        if not audio_info.audio_detected:
-            return MouthState.Closed
-        
-        if audio_info.rms > 1000:
-            return MouthState.Open
-        elif audio_info.rms > 500:
-            return MouthState.Intermediate
-        
-        return MouthState.Closed
+        return self.audio_evaluator.evaluate(audio_info)
     
     @property
     def running(self) -> bool:
         return self.audio_reader._running
-    
-    @property
-    def curr_face_type(self) -> MouthState:
-        return self._curr_face_type
+
     
     @property
     def db_volume_threshold(self) -> int:
@@ -71,8 +54,12 @@ class AppController:
     
     @db_volume_threshold.setter
     def db_volume_threshold(self, value : int) -> None:
-        self.audio_reader.db_threshold = value
+        self.audio_reader.configure(db_threshold=value)
 
-    def set_db_volume_threshold(self, threshold : int) -> None:
-        print(threshold)
-        self.audio_reader.db_threshold = threshold
+    def set_db_volume_threshold(self, value : int) -> None:
+
+        self.audio_reader.configure(db_threshold=value)
+
+    def on_speech_volume_threshold_valueChanged(self, value : int) -> None:
+
+        self.audio_evaluator.configure(speech_volume_threshold=self.audio_reader.db_threshold + value)
