@@ -31,8 +31,8 @@ class AudioInfo:
 
         self.audio_detected = db > db_threshold
 
-        self.rms = rms
-        self.db = db
+        self.rms : float = rms
+        self.db : float = db
 
         if compute_fft:
             fft = np.fft.rfft(samples)
