@@ -10,7 +10,7 @@
     {
       "label": "Install requirements",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m pip install --upgrade pip && ${config:python.pythonPath} -m pip install -r requirements.txt",
+      "command": "& '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pip install --upgrade pip; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pip install -r requirements.txt",
       "problemMatcher": []
     }
   ]
