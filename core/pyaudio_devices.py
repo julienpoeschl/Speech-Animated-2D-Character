@@ -1,5 +1,6 @@
 from pyaudio import PyAudio
 
+
 class DeviceInfo:
     """
     Retrieves and stores information about all audio input/output devices
