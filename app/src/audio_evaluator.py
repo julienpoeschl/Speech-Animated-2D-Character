@@ -1,13 +1,13 @@
+from app.src.constants import DEFAULT_SPEECH_VOLUME_THRESHOLD
 from core.audio_analysis import AudioInfo
+
 from .frame_loader import MouthState
 
 
 class AudioEvaluator:
 
-    DEFAULT_SPEECH_VOLUME_THRESHOLD: int = -50
-
     def __init__(self) -> None:
-        self._speech_volume_threshold = self.DEFAULT_SPEECH_VOLUME_THRESHOLD
+        self._speech_volume_threshold = DEFAULT_SPEECH_VOLUME_THRESHOLD
 
 
     def evaluate(self, audio_info : AudioInfo | None) -> MouthState:
@@ -32,5 +32,4 @@ class AudioEvaluator:
             raise RuntimeWarning("Configure was called on audio evaluator without any arguments. This does nothing and is redundant.")
         
         self._speech_volume_threshold = speech_volume_threshold
-        print(speech_volume_threshold)
         

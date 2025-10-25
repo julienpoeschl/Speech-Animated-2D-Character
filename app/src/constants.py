@@ -1,0 +1,17 @@
+from pyaudio import paInt16
+
+from .frame_loader import MouthState
+
+DEFAULT_SPEECH_VOLUME_THRESHOLD: int = -50
+
+STARTING_FACE_TYPE = MouthState.Closed
+
+MIN_DB = -60
+MAX_DB = 0
+MIN_SPEECH_DB = 0
+
+DEFAULT_DB_THRESHOLD = -40
+DEFAULT_FORMAT: int = paInt16
+DEFAULT_CHANNEL_COUNT: int = 1
+DEFAULT_SAMPLE_RATE: int = 44100
+DEFAULT_FRAMES: int = 1024
