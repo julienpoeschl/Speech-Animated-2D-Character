@@ -11,7 +11,7 @@ Then we activate it with in cmd (or any other terminal) using
 
 Now, you should be able to run the application with
 
-5. `python -m app.src.main `
+5. `python -m app.src.main`
 
 If everything worked correctly, you should see this window:
 
