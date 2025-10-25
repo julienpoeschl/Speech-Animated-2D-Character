@@ -1,7 +1,9 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton
-from PyQt6.QtCore import QSize, QTimer
+from typing import Callable
 
-from ..controller import AppController
+from PyQt6.QtCore import QSize, QTimer
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QPushButton, QWidget
+
+from ..frame_loader import MouthState
 from .character_panel import CharacterPanel
 from .settings_panel import SettingsPanel
 
@@ -16,10 +18,10 @@ WINDOW_FPS_IN_MS = int(1000 / WINDOW_FPS)
 
 
 class AppWindow(QWidget):
-    def __init__(self, app : QApplication, controller : AppController):
+    def __init__(self, app : QApplication, device_names : list[str], default_device_index : int):
         super().__init__()
 
-        self.controller = controller
+
         self.timer = QTimer()
         screen = app.primaryScreen()
 
@@ -39,48 +41,59 @@ class AppWindow(QWidget):
         
 
         # --- Left: Settings panel ---
-        settings_panel = SettingsPanel(controller)
+        settings_panel = SettingsPanel(device_names, default_device_index)
         main_layout.addWidget(settings_panel, 3)
-        self.settings_panel = settings_panel
+        self._settings_panel = settings_panel
 
 
         # --- Right: Animated character panel ---
-        character_panel = CharacterPanel(controller)
+        character_panel = CharacterPanel()
         main_layout.addWidget(character_panel, 3)
         self.character_panel = character_panel
 
         # --- Right: Start button ---
-        self.start_button = QPushButton("Start Listening")
-        self.start_button.clicked.connect(self._on_start_clicked)
+        self._start_button = QPushButton("Start Listening")
         character_panel_layout = character_panel.layout()
         if character_panel_layout:
-            character_panel_layout.addWidget(self.start_button)
+            character_panel_layout.addWidget(self._start_button)
 
+
+    def listen_start_button_clicked(self, func : Callable[[], None]) -> None:
+        """Subscribe to start button clicked event."""
+        self._start_button.clicked.connect(func)
+
+    def stop_listen_event(self) -> None:
+        self.timer.stop()
+        self.character_panel.stop()
+        self._settings_panel.stop()
+        self._start_button.setText("Start Listening")
+
+    def start_listen_event(self, state_callback : Callable[[], MouthState], volume_callback : Callable[[], int]) -> None:
         self.timer.start(WINDOW_FPS_IN_MS)
+        self._start_button.setText("Stop Listening")
+
+        def listen(state_callback : Callable[[], MouthState], volume_callback : Callable[[], int]) -> None:
+            self.character_panel.update(state_callback())
+            self._settings_panel.update(volume_callback())
+
+        self.timer.timeout.connect(lambda: listen(state_callback, volume_callback))
 
 
-    def _on_start_clicked(self) -> None:
-        if self.controller.running:
-            self.timer.timeout.disconnect(self.character_panel.update)
-            self.timer.timeout.disconnect(self.settings_panel.update_volume)
-            self.start_button.setText("Start Listening")
-            self.controller.stop_reading_audio()
-        else:
-            self.start_button.setText("Stop Listening")
-            self.controller.start_reading_audio()
-            self.timer.timeout.connect(self.character_panel.update)
-            self.timer.timeout.connect(self.settings_panel.update_volume)
+    def listen_device_combo_index_changed(self, func : Callable[[int], None]) -> None:
+        self._settings_panel.listen_device_combo_index_changed(func)
+
+    def listen_ambient_cutoff_threshold_slider_value_changed(self, ambient_cuttoff_callback : Callable[[int], None], speech_threshold_callback : Callable[[int], None]) -> None:
+        self._settings_panel.listen_ambient_cutoff_threshold_slider_value_changed(ambient_cuttoff_callback, speech_threshold_callback)
+
+    def listen_speech_threshold_spinBox_value_changed(self, func : Callable[[int], None]) -> None:
+        self._settings_panel.listen_speech_threshold_spinBox_value_changed(func)
 
     def closeEvent(self, event):
         """
         This method is called automatically when the user tries to close the window.
         """
 
-        if self.controller.running:
-            self.timer.timeout.disconnect(self.character_panel.update)
-            self.timer.timeout.disconnect(self.settings_panel.update_volume)
-            self.start_button.setText("Start Listening")
-            self.controller.stop_reading_audio()
+        self.timer.stop()
 
         event.accept()
         # event.ignore()

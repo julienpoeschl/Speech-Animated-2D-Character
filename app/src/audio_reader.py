@@ -1,7 +1,16 @@
 import threading
 
-from pyaudio import PyAudio, paInt16
+from pyaudio import PyAudio
+
+from app.src.constants import (
+    DEFAULT_CHANNEL_COUNT,
+    DEFAULT_DB_THRESHOLD,
+    DEFAULT_FORMAT,
+    DEFAULT_FRAMES,
+    DEFAULT_SAMPLE_RATE,
+)
 from core.audio_analysis import AudioInfo
+
 
 class AudioReader:
     """
@@ -20,12 +29,7 @@ class AudioReader:
     - stop()
     - close()
     """
-    
-    _DEFAULT_DB_THRESHOLD = -40
-    _DEFAULT_FORMAT: int = paInt16
-    _DEFAULT_CHANNEL_COUNT: int = 1
-    _DEFAULT_SAMPLE_RATE: int = 44100
-    _DEFAULT_FRAMES: int = 1024
+
 
     @property
     def curr_audio_info(self) -> AudioInfo | None:
@@ -50,11 +54,11 @@ class AudioReader:
         self._p = p
         self._stream = None
 
-        self._db_threshold = self._DEFAULT_DB_THRESHOLD
-        self._format = self._DEFAULT_FORMAT
-        self._channel_count = self._DEFAULT_CHANNEL_COUNT
-        self._sample_rate = self._DEFAULT_SAMPLE_RATE
-        self._frames = self._DEFAULT_FRAMES
+        self._db_threshold = DEFAULT_DB_THRESHOLD
+        self._format = DEFAULT_FORMAT
+        self._channel_count = DEFAULT_CHANNEL_COUNT
+        self._sample_rate = DEFAULT_SAMPLE_RATE
+        self._frames = DEFAULT_FRAMES
 
 
     def start(self, device_index):

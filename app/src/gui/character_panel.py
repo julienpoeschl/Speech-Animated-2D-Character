@@ -1,20 +1,19 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from ..controller import AppController
+from app.src.constants import STARTING_FACE_TYPE
+
 from ..frame_loader import FrameLoader, MouthState
 
-STARTING_FACE_TYPE = MouthState.Closed
 
 class CharacterPanel(QWidget):
     """
     QWidget that displays a character frame.
     """
 
-    def __init__(self, controller : AppController, parent=None):
+    def __init__(self, parent=None):
         """
-        Args:
-            controller (AppController): Application controller as interface to functionality.
+        
         """
         super().__init__(parent)
 
@@ -23,22 +22,25 @@ class CharacterPanel(QWidget):
         layout = QVBoxLayout(self)
 
         # --- Character image ---
-        self.character_label = QLabel()
-        self.character_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.character_label)
+        character_label = QLabel()
+        character_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(character_label)
 
         pixmap = frame_loader.get_frame_pixmap(STARTING_FACE_TYPE)
-        self.character_label.setPixmap(pixmap)
-        self.character_label.setScaledContents(True)
+        character_label.setPixmap(pixmap)
+        character_label.setScaledContents(True)
 
-        self.controller = controller
-        self.frame_loader = frame_loader
+        self._character_label = character_label
+        self._frame_loader = frame_loader
 
 
-    def update(self) -> None:
+    def update(self, state : MouthState) -> None:
         """
         Get current character frame from frame loader and update the panel.
         """
-        curr_face_type = self.controller.evaluate_audio()
-        pixmap = self.frame_loader.get_frame_pixmap(curr_face_type)
-        self.character_label.setPixmap(pixmap)
+
+        pixmap = self._frame_loader.get_frame_pixmap(state)
+        self._character_label.setPixmap(pixmap)
+
+    def stop(self) -> None:
+        self.update(STARTING_FACE_TYPE)

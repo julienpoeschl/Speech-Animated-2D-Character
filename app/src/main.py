@@ -1,15 +1,14 @@
-from PyQt6.QtWidgets import QApplication
 import sys
 
+from PyQt6.QtWidgets import QApplication
+
 from .controller import AppController
-from .gui.window import AppWindow
 
 
 def main() -> None:
     app = QApplication(sys.argv)
-    controller = AppController()
-    window = AppWindow(app, controller)
-    window.show()
+    controller = AppController(app)
+    controller.start_application()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

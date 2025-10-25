@@ -1,53 +1,52 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QComboBox, QHBoxLayout, QSpinBox
+from typing import Callable
+
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QSlider, QSpinBox, QVBoxLayout, QWidget
 
-from ..controller import AppController
+from app.src.constants import DEFAULT_DB_THRESHOLD, MAX_DB, MIN_DB, MIN_SPEECH_DB
 
-MIN_DB = -60
-MAX_DB = 0
-
-MIN_SPEECH_DB = 0
 
 class SettingsPanel(QWidget):
     """
     QWidget that contains interactable settings.
     """
 
-    def __init__(self, controller : AppController, parent=None):
+    def __init__(self, device_names : list[str], default_device_index : int, parent = None):
         """
-        Args:
-            controller (AppController): Application controller as interface to functionality.
+            Args:
+                device_names (list[str]): All available audio device names.
+                default_device_index (int): Index of default device.
         """
         super().__init__(parent)
 
-        self.controller = controller
         layout = QVBoxLayout(self)
 
-        self.device_label = QLabel("Input Device:")
-        layout.addWidget(self.device_label)
+        device_label = QLabel("Input Device:")
+        layout.addWidget(device_label)
 
  
-        self.device_combo = QComboBox()
-        self.device_combo.addItems(controller.get_device_names())
-        layout.addWidget(self.device_combo)
-        default_index = controller.get_default_device_index()
-        self.device_combo.setCurrentIndex(default_index)
-        self.device_combo.currentIndexChanged.connect(controller.on_device_index_changed)
-        controller.on_device_index_changed(default_index)
+        device_combo = QComboBox()
+        device_combo.addItems(device_names)
+        layout.addWidget(device_combo)
+        default_index = default_device_index
+        device_combo.setCurrentIndex(default_index)
+        self._device_combo = device_combo
 
 
-        self.ambient_cutoff_threshold_label = QLabel("Ambient/Ignore Threshold (dB):")
-        layout.addWidget(self.ambient_cutoff_threshold_label)
 
-        self.ambient_cutoff_threshold_slider = QSlider(Qt.Orientation.Horizontal)
-        self.ambient_cutoff_threshold_slider.setMinimum(MIN_DB)
-        self.ambient_cutoff_threshold_slider.setMaximum(MAX_DB)
-        self.ambient_cutoff_threshold_slider.setValue(MIN_DB)
+        ambient_cutoff_threshold_label = QLabel("Ambient/Ignore Threshold (dB):")
+        layout.addWidget(ambient_cutoff_threshold_label)
+
+        ambient_cutoff_threshold_slider = QSlider(Qt.Orientation.Horizontal)
+        ambient_cutoff_threshold_slider.setMinimum(MIN_DB)
+        ambient_cutoff_threshold_slider.setMaximum(MAX_DB)
+        ambient_cutoff_threshold_slider.setValue(DEFAULT_DB_THRESHOLD)
         #self.db_threshold_slider.setDisabled(True)  # makes it uninteractable
-        self.ambient_cutoff_threshold_slider.valueChanged.connect(controller.set_db_volume_threshold)
-        layout.addWidget(self.ambient_cutoff_threshold_slider)
+        layout.addWidget(ambient_cutoff_threshold_slider)
 
-        self.update_ambient_cutoff_threshold_slider(0.0)
+        self._ambient_cutoff_threshold_slider = ambient_cutoff_threshold_slider
+
+        self.update(MIN_DB)
 
         tick_layout = QHBoxLayout()
         layout.addLayout(tick_layout)
@@ -58,60 +57,75 @@ class SettingsPanel(QWidget):
             tick_layout.addWidget(lbl)
 
 
-        self.speech_threshold_label = QLabel("Speech Threshold (dB):")
-        layout.addWidget(self.speech_threshold_label)
+        speech_threshold_label = QLabel("Speech Threshold (dB):")
+        layout.addWidget(speech_threshold_label)
 
-        self.speech_threshold_spinBox = QSpinBox()
-        self.speech_threshold_spinBox.setMinimum(MIN_SPEECH_DB)
+        speech_threshold_spinBox = QSpinBox()
+        speech_threshold_spinBox.setMinimum(MIN_SPEECH_DB)
+        
+        def update_speech_spinBox_max() -> None:
+            # maybe clamp value before
+            max_speech_threshold = abs(ambient_cutoff_threshold_slider.value())
+            speech_threshold_spinBox.setMaximum(max_speech_threshold)
 
-        self._update_speech_spinBox_max()
-        self.ambient_cutoff_threshold_slider.valueChanged.connect(self._update_speech_spinBox_max)
+        update_speech_spinBox_max()
+        ambient_cutoff_threshold_slider.valueChanged.connect(update_speech_spinBox_max)
 
-        self.speech_threshold_spinBox.setValue(MIN_SPEECH_DB)
-        self.speech_threshold_spinBox.valueChanged.connect(controller.on_speech_volume_threshold_valueChanged)
-        layout.addWidget(self.speech_threshold_spinBox)
+        speech_threshold_spinBox.setValue(MIN_SPEECH_DB)
 
-        layout.addStretch()  # push items to top
+        layout.addWidget(speech_threshold_spinBox)
+        self._speech_threshold_spinBox = speech_threshold_spinBox
+
+        layout.addStretch()
 
 
 
-    def update_ambient_cutoff_threshold_slider(self, progress: float) -> None:
-        """progress is a value between 0.0 (min) and 1.0 (max)"""
-        # Convert progress to a CSS gradient stop
-        # Blue → red gradient, tinted only up to progress
-        if progress < 0 or progress > 1:
-            raise RuntimeError("ERROR: Progress must be a value between 0.0 and 1.0.")
-            
-        gradient = f"""
-            QSlider::groove:horizontal {{
-                border: 1px solid #444;
-                height: 20px;
-                border-radius: 5px;
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0   #24853e,
-                    stop: {progress + 0.001:.3f} #1e1e1e
-                );
-            }}
-            QSlider::handle:horizontal {{
-                background: #ffffff;
-                width: 5px;
-                margin: -2px 0;
-                border-radius: 5px;
-            }}
+    def update(self, volume : int) -> None:
         """
-        self.ambient_cutoff_threshold_slider.setStyleSheet(gradient)
-
-    def update_volume(self):
-        db = self.controller.db_volume_threshold
-        #self.ambient_cutoff_threshold_slider.setValue(int(db))
-
+        Args:
+            volume (int): Decibel volume.
+        """
         # convert dB range (-60..0) → (0..1)
-        progress = (db + 60) / 60
-        self.update_ambient_cutoff_threshold_slider(progress)
+        progress = (volume + 60) / 60
+
+        def update_ambient_cutoff_threshold_slider(progress: float) -> None:
+            """progress is a value between 0.0 (min) and 1.0 (max)"""
+
+            if progress < 0 or progress > 1:
+                raise RuntimeError("ERROR: Progress must be a value between 0.0 and 1.0.")
+                
+            gradient = f"""
+                QSlider::groove:horizontal {{
+                    border: 1px solid #444;
+                    height: 20px;
+                    border-radius: 5px;
+                    background: qlineargradient(
+                        x1: 0, y1: 0, x2: 1, y2: 0,
+                        stop: 0   #24853e,
+                        stop: {progress + 0.001:.3f} #1e1e1e
+                    );
+                }}
+                QSlider::handle:horizontal {{
+                    background: #ffffff;
+                    width: 5px;
+                    margin: -2px 0;
+                    border-radius: 5px;
+                }}
+            """
+            self._ambient_cutoff_threshold_slider.setStyleSheet(gradient)
+    
+        update_ambient_cutoff_threshold_slider(progress)
 
 
-    def _update_speech_spinBox_max(self) -> None:
-        # maybe clamp value before
-        max_speech_threshold = abs(self.ambient_cutoff_threshold_slider.value())
-        self.speech_threshold_spinBox.setMaximum(max_speech_threshold)
+    def listen_device_combo_index_changed(self, func : Callable[[int], None]) -> None:
+        self._device_combo.currentIndexChanged.connect(func)
+
+    def listen_ambient_cutoff_threshold_slider_value_changed(self, ambient_cuttoff_callback : Callable[[int], None], speech_threshold_callback : Callable[[int], None]) -> None:
+        self._ambient_cutoff_threshold_slider.valueChanged.connect(ambient_cuttoff_callback)
+        self._speech_threshold_spinBox.valueChanged.connect(speech_threshold_callback)
+
+    def listen_speech_threshold_spinBox_value_changed(self, func : Callable[[int], None]) -> None:
+        self._speech_threshold_spinBox.valueChanged.connect(func)
+
+    def stop(self) -> None:
+        self.update(-60)

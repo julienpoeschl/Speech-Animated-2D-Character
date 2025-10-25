@@ -1,9 +1,9 @@
-from PyQt6.QtGui import QPixmap
-from enum import Enum
-import random
 import json
 import os
+import random
+from enum import Enum
 
+from PyQt6.QtGui import QPixmap
 
 CONFIG_PATH = os.path.join("app", "assets", "configuration", "config.json")
 ASSETS_DIR = os.path.join("app", "assets")
