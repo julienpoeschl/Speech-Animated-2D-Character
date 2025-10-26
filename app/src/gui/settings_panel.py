@@ -11,7 +11,11 @@ class SettingsPanel(QWidget):
     QWidget that contains interactable settings.
     """
 
-    def __init__(self, device_names : list[str], default_device_index : int, parent = None):
+    @property
+    def device_index(self) -> int:
+        return self._device_combo.currentIndex()
+
+    def __init__(self, device_names : list[str], default_device_index : int, device_changed_callback : Callable[[int], None], ambient_threshold_changed_callback : Callable[[int], None], speech_threshold_changed_callback : Callable[[int], None], parent = None):
         """
             Args:
                 device_names (list[str]): All available audio device names.
@@ -31,6 +35,7 @@ class SettingsPanel(QWidget):
         default_index = default_device_index
         device_combo.setCurrentIndex(default_index)
         self._device_combo = device_combo
+        device_combo.currentIndexChanged.connect(device_changed_callback)
 
 
 
@@ -45,7 +50,8 @@ class SettingsPanel(QWidget):
         layout.addWidget(ambient_cutoff_threshold_slider)
 
         self._ambient_cutoff_threshold_slider = ambient_cutoff_threshold_slider
-
+        ambient_cutoff_threshold_slider.valueChanged.connect(ambient_threshold_changed_callback)
+    
         self.update(MIN_DB)
 
         tick_layout = QHBoxLayout()
@@ -70,7 +76,9 @@ class SettingsPanel(QWidget):
 
         update_speech_spinBox_max()
         ambient_cutoff_threshold_slider.valueChanged.connect(update_speech_spinBox_max)
+        ambient_cutoff_threshold_slider.valueChanged.connect(lambda: speech_threshold_changed_callback(speech_threshold_spinBox.value()))
 
+        speech_threshold_spinBox.valueChanged.connect(speech_threshold_changed_callback)
         speech_threshold_spinBox.setValue(MIN_SPEECH_DB)
 
         layout.addWidget(speech_threshold_spinBox)
@@ -116,16 +124,6 @@ class SettingsPanel(QWidget):
     
         update_ambient_cutoff_threshold_slider(progress)
 
-
-    def listen_device_combo_index_changed(self, func : Callable[[int], None]) -> None:
-        self._device_combo.currentIndexChanged.connect(func)
-
-    def listen_ambient_cutoff_threshold_slider_value_changed(self, ambient_cuttoff_callback : Callable[[int], None], speech_threshold_callback : Callable[[int], None]) -> None:
-        self._ambient_cutoff_threshold_slider.valueChanged.connect(ambient_cuttoff_callback)
-        self._speech_threshold_spinBox.valueChanged.connect(speech_threshold_callback)
-
-    def listen_speech_threshold_spinBox_value_changed(self, func : Callable[[int], None]) -> None:
-        self._speech_threshold_spinBox.valueChanged.connect(func)
 
     def stop(self) -> None:
         self.update(-60)
