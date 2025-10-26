@@ -18,16 +18,24 @@ class AudioInfo:
 
         """
         
-        samples = np.frombuffer(data, dtype=np.int16)
-        samples = samples.astype(np.float32)
+        samples = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
+        if len(samples) == 0:
+            self.audio_detected = False
+            return
         
         rms = np.sqrt(np.mean(samples**2))
         if np.isnan(rms) or np.isinf(rms):
             rms = 0.0
 
-        db = 20 * np.log10(rms / 32768)
+        db = 20 * np.log10(rms)
         if np.isnan(db) or np.isinf(db):
             db = -100.0
+
+        zcr = np.mean(samples[:-1] * samples[1:] < 0)
+
+        energy_threshold = 0.02
+        # further testing
+        is_speech = rms > energy_threshold and 0.02 < zcr < 0.25
 
         self.audio_detected = db > db_threshold
 
