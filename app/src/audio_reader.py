@@ -41,9 +41,13 @@ class AudioReader:
     @property
     def db_threshold(self) -> int:
         return self._db_threshold
+    
+    @property
+    def running(self) -> bool:
+        return self._running
 
     
-    def __init__(self, p : PyAudio):
+    def __init__(self, p : PyAudio, default_device_index : int):
         """
         Args:
             p (PyAudio): 
@@ -54,6 +58,7 @@ class AudioReader:
         self._p = p
         self._stream = None
 
+        self._device_index = default_device_index
         self._db_threshold = DEFAULT_DB_THRESHOLD
         self._format = DEFAULT_FORMAT
         self._channel_count = DEFAULT_CHANNEL_COUNT
@@ -61,46 +66,37 @@ class AudioReader:
         self._frames = DEFAULT_FRAMES
 
 
-    def start(self, device_index):
+    def start(self):
         """
         Starts a new thread to continuously read audio from an input audio device. Can get stopped by calling stop().
-
-        Args:
-            device_index (int): The index of the audio device.
         """
         if self._running:
             raise RuntimeWarning("Audio reader already running.")
         
-        def inner_read_loop(device_index : int):
-            """
+        def inner_read_loop():
 
-
-            Args:
-                device_index (int): The index of the audio device.
-
-            """
             if not self._p:
                 raise RuntimeError("ERROR")
             self._stream = self._p.open(format=self._format,
                                         channels=self._channel_count,
                                         rate=self._sample_rate,
                                         input=True,
-                                        input_device_index=device_index,
+                                        input_device_index=self._device_index,
                                         frames_per_buffer=self._frames)
             try:
                 while self._running:
                     data = self._stream.read(self._frames, exception_on_overflow=False)
                     self._curr_audio_info = AudioInfo(data, self._sample_rate, self._db_threshold)
                     if self._curr_audio_info.audio_detected:
+                        #print(self._curr_audio_info.db)
                         pass
-                        print(self._curr_audio_info.db)
             finally:
                 self._stream.stop_stream()
                 self._stream.close()
                 self._stream = None
 
         self._running = True
-        self._thread = threading.Thread(target=inner_read_loop, args=(device_index,), daemon=True)
+        self._thread = threading.Thread(target=inner_read_loop, args=(), daemon=True)
         self._thread.start()
 
     def stop(self):
@@ -129,11 +125,12 @@ class AudioReader:
             self._p.terminate()
             self._p = None
 
-    def configure(self, db_threshold : int | None = None, format : int | None= None, channel_count : int | None= None, sample_rate : int | None = None, frames : int | None = None) -> None:
+    def configure(self, device_index : int | None = None, db_threshold : int | None = None, format : int | None= None, channel_count : int | None= None, sample_rate : int | None = None, frames : int | None = None) -> None:
         """
         Updates the settings of the audio reader with all provided new values.
 
         Args:
+            device_index (int): 
             db_threshold (int): 
             format (int):
             channel_count (int):
@@ -141,9 +138,11 @@ class AudioReader:
             frames (int):
         """
         
-        if all(arg is None for arg in (db_threshold, format, channel_count, sample_rate, frames)):
+        if all(arg is None for arg in (device_index, db_threshold, format, channel_count, sample_rate, frames)):
             raise RuntimeWarning("Configure was called on audio reader without any arguments. This does nothing and is redundant.")
         
+        if device_index is not None:
+            self._device_index = device_index
         if db_threshold is not None:
             self._db_threshold = db_threshold
         if format is not None:
